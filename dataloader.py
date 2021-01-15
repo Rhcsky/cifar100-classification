@@ -57,7 +57,7 @@ def get_dataloader(args):
         images.append(x)
         labels.append(y)
 
-    train_loader = DataLoader(CustomDataset(train_dataset, aug_train_dataset), batch_size=args.batch_size,
+    train_loader = DataLoader(CustomDataset(images, labels), batch_size=args.batch_size,
                               shuffle=True, num_workers=args.workers, pin_memory=True)
     test_loader = DataLoader(datasets.CIFAR100('./data', train=False, transform=transform_test),
                              batch_size=args.batch_size, shuffle=True, num_workers=args.workers, pin_memory=True)
