@@ -51,7 +51,7 @@ def main():
     print(f"model parameter : {sum(p.numel() for p in model.parameters() if p.requires_grad)}")
 
     for epoch in range(start_epoch, args.epochs):
-        train_loss = train(val_loader, model, optimizer, criterion)
+        train_loss = train(train_loader, model, optimizer, criterion)
         err1, err5, val_loss = validate(val_loader, model, criterion)
 
         if err1 <= best_err1:
