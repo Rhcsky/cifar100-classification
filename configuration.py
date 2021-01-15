@@ -16,8 +16,8 @@ parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                     help='momentum')
 parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)')
-parser.add_argument('--depth', default=32, type=int,
-                    help='depth of the network (default: 32)')
+parser.add_argument('--depth', default=20, type=int,
+                    help='depth of the network (default: 20)')
 parser.add_argument('--no-bottleneck', dest='bottleneck', action='store_false',
                     help='to use basicblock for CIFAR datasets (default: bottleneck)')
 parser.add_argument('--verbose', dest='verbose', action='store_true',
@@ -50,7 +50,11 @@ def get_config():
 
 
 def save_args(args):
-    param_path = os.path.join('runs/', args.expname, 'params.json')
+    directory = f'runs/{args.expname}/'
+    param_path = os.path.join(directory, 'params.json')
+
+    if not os.path.exists(f'runs/{args.expname}'):
+        os.makedirs(directory)
 
     if not os.path.isfile(param_path):
         print(f"Save params in {param_path}")
@@ -59,8 +63,8 @@ def save_args(args):
         with open(param_path, 'w') as fp:
             json.dump(all_params, fp, indent=4, sort_keys=True)
     else:
-        print(f"[!] Config file already exist.")
-        raise ValueError
+        print(f"Config file already exist.")
+        # raise ValueError
 
 
 def load_args(args):
