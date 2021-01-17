@@ -60,7 +60,7 @@ def get_dataloader(args):
     train_loader = DataLoader(CustomDataset(images, labels), batch_size=args.batch_size,
                               shuffle=True, num_workers=args.workers, pin_memory=True)
     test_loader = DataLoader(datasets.CIFAR100('./data', train=False, transform=transform_test),
-                             batch_size=args.batch_size, shuffle=True, num_workers=args.workers, pin_memory=True)
+                             batch_size=args.batch_size, shuffle=False, num_workers=args.workers, pin_memory=True)
 
     torch.save(train_loader, train_dir)
     torch.save(test_loader, test_dir)
