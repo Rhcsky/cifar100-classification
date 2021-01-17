@@ -31,6 +31,8 @@ def main():
     optimizer = torch.optim.SGD(model.parameters(), args.lr, momentum=args.momentum, weight_decay=args.weight_decay,
                                 nesterov=True)
 
+    # optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay)
+
     writer = SummaryWriter(f'runs/{args.expname}')
     cudnn.benchmark = True
 
@@ -51,6 +53,9 @@ def main():
     print(f"model parameter : {sum(p.numel() for p in model.parameters() if p.requires_grad)}")
 
     for epoch in range(start_epoch, args.epochs):
+
+        adjust_learning_rate(optimizer, epoch)
+
         train_loss = train(train_loader, model, optimizer, criterion)
         err1, err5, val_loss = validate(val_loader, model, criterion)
 
@@ -76,7 +81,7 @@ def main():
         tqdm.write(
             f"[{epoch}/{args.epochs}] {train_loss:.3f}, {val_loss:.3f}, {err1}, {err5}, # {best_err1}, {best_err5}")
 
-        scheduler.step()
+        # scheduler.step()
 
     writer.close()
 
@@ -199,6 +204,14 @@ def rand_bbox(size, lam):
     bby2 = np.clip(cy + cut_h // 2, 0, H)
 
     return bbx1, bby1, bbx2, bby2
+
+
+def adjust_learning_rate(optimizer, epoch):
+    """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
+    lr = args.lr * (0.1 ** (epoch // (args.epochs * 0.5))) * (0.1 ** (epoch // (args.epochs * 0.75)))
+
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
 
 
 class AverageMeter(object):
