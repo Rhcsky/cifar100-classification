@@ -47,15 +47,17 @@ def main():
         model.load_state_dict(checkpoint['model_state_dict'])
 
         # evaluate on validation set
-        err1, err5, val_loss = validate(val_loader, model, criterion)
+        err1, err5, val_loss = validate(val_loader, model, criterion, path)
 
         print(f'|{os.path.basename(path):^20}|{err1:^15}|{err5:^15}|{100 - err1:^15}|')
 
 
-def validate(val_loader, model, criterion):
+def validate(val_loader, model, criterion, path):
     losses = AverageMeter()
     top1 = AverageMeter()
     top5 = AverageMeter()
+
+    f = open(f'{path + "/res"}.txt', 'w')
 
     # switch to evaluate mode
     model.eval()
@@ -67,7 +69,10 @@ def validate(val_loader, model, criterion):
         loss = criterion(output, target)
 
         # measure accuracy and record loss
-        (err1, err5), _ = accuracy(output.data, target, topk=(1, 5))
+        (err1, err5), pred_list = accuracy(output.data, target, topk=(1, 5))
+
+        for pred in pred_list:
+            f.write(str(pred.item()) + '\n')
 
         losses.update(loss.item(), input.size(0))
 

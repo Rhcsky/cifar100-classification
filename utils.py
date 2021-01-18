@@ -29,4 +29,4 @@ def accuracy(output, target, topk=(1,)):
         wrong_k = batch_size - correct_k
         res.append(wrong_k.mul_(100.0 / batch_size))
 
-    return res, pred
+    return res, pred[:1].squeeze(0)
