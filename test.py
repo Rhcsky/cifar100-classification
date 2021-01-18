@@ -15,6 +15,8 @@ from utils import AverageMeter, accuracy
 
 parser = argparse.ArgumentParser(description='Cutmix PyTorch CIFAR-100 Test')
 parser.add_argument('--model_path', default='./runs/*', type=str, metavar='PATH')
+parser.add_argument('--batch_size', default=64)
+parser.add_argument('--workers', default=0)
 
 best_err1 = 100
 best_err5 = 100

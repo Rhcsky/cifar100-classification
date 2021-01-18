@@ -6,7 +6,8 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
-import Augmentor
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
 
 
 def get_dataloader(args):
@@ -21,10 +22,6 @@ def get_dataloader(args):
 
     normalize = transforms.Normalize((0.5071, 0.4865, 0.4409), (0.2673, 0.2564, 0.2761))
 
-    aug = Augmentor.Pipeline()
-    aug.rotate(0.5, 15, 15)
-    aug.random_distortion(0.5, 6, 6, 10)
-
     transform_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
@@ -32,12 +29,21 @@ def get_dataloader(args):
         normalize,
     ])
 
-    transform_aug = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
-        aug.torch_transform(),
-        transforms.ToTensor(),
+    transform_albumentations = A.Compose([
+        A.Resize(36, 36),
+        A.RandomCrop(32, 32),
+        A.OneOf([
+            A.HorizontalFlip(p=1),
+            A.RandomRotate90(p=1),
+            A.VerticalFlip(p=1)
+        ], p=1),
+        A.OneOf([
+            A.MotionBlur(p=1),
+            A.OpticalDistortion(p=1),
+            A.GaussNoise(p=1)
+        ], p=1),
         normalize,
+        ToTensorV2(),
     ])
 
     transform_test = transforms.Compose([
@@ -45,19 +51,9 @@ def get_dataloader(args):
         normalize
     ])
 
-    train_dataset = datasets.CIFAR100('./data', train=True, download=True, transform=transform_train)
-    aug_train_dataset = datasets.CIFAR100('./data', train=True, download=False, transform=transform_aug)
+    train_dataset = datasets.CIFAR100('./data', train=True, download=True, transform=None)
 
-    images = []
-    labels = []
-    for x, y in tqdm(train_dataset, desc="concat dataset"):
-        images.append(x)
-        labels.append(y)
-    for x, y in tqdm(aug_train_dataset, desc="concat dataset"):
-        images.append(x)
-        labels.append(y)
-
-    train_loader = DataLoader(CustomDataset(images, labels), batch_size=args.batch_size,
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size,
                               shuffle=True, num_workers=args.workers, pin_memory=True)
     test_loader = DataLoader(datasets.CIFAR100('./data', train=False, transform=transform_test),
                              batch_size=args.batch_size, shuffle=False, num_workers=args.workers, pin_memory=True)
