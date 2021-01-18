@@ -5,12 +5,12 @@ import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
-from tqdm import tqdm
 
 from configuration import get_config
 from dataloader import get_dataloader
 from resnet import ResNet
 from custom_scheduler import OneCyclePolicy
+from utils import AverageMeter, accuracy
 
 best_err1 = 100
 best_err5 = 100
@@ -78,8 +78,7 @@ def main():
         writer.add_scalar("Err/Top1", err1)
         writer.add_scalar("Err/Top5", err5)
 
-        tqdm.write(
-            f"[{epoch}/{args.epochs}] {train_loss:.3f}, {val_loss:.3f}, {err1}, {err5}, # {best_err1}, {best_err5}")
+        print(f"[{epoch}/{args.epochs}] {train_loss:.3f}, {val_loss:.3f}, {err1}, {err5}, # {best_err1}, {best_err5}")
 
         # scheduler.step()
 
@@ -93,7 +92,7 @@ def train(train_loader, model, optimizer, criterion):
 
     # switch to train mode
     model.train()
-    for i, data in tqdm(enumerate(train_loader), leave=False, total=len(train_loader)):
+    for i, data in enumerate(train_loader):
         input, target = data[0].to(device), data[1].to(device)
 
         r = np.random.rand(1)
@@ -155,24 +154,6 @@ def validate(val_loader, model, criterion):
     return top1.avg, top5.avg, losses.avg
 
 
-def accuracy(output, target, topk=(1,)):
-    """Computes the precision@k for the specified values of k"""
-    maxk = max(topk)
-    batch_size = target.size(0)
-
-    _, pred = output.topk(maxk, 1, True, True)
-    pred = pred.t()
-    correct = pred.eq(target.reshape(1, -1).expand_as(pred))
-
-    res = []
-    for k in topk:
-        correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
-        wrong_k = batch_size - correct_k
-        res.append(wrong_k.mul_(100.0 / batch_size))
-
-    return res, pred
-
-
 def save_checkpoint(state, is_best):
     directory = f"runs/{args.expname}/"
     filename = directory + f"checkpoint_{state['epoch']}.pth"
@@ -212,22 +193,6 @@ def adjust_learning_rate(optimizer, epoch):
 
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
-
-
-class AverageMeter(object):
-    """Computes and stores the average and current value"""
-
-    def __init__(self):
-        self.count = 0
-        self.sum = 0
-        self.avg = 0
-        self.val = 0
-
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
 
 
 if __name__ == '__main__':
