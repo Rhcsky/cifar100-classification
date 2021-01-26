@@ -77,7 +77,7 @@ def prototypical_loss(input, target, n_support, device):
     return loss_val, acc_val, prototypes
 
 
-def prototypical_evaluator(prototype, input, target):
+def prototypical_evaluator(input, target, prototype):
     dists = euclidean_dist(input, prototype)
     log_p_y = F.log_softmax(-dists, dim=1)
     y_hat = log_p_y.argmax(1)
