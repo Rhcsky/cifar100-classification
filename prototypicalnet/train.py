@@ -43,13 +43,14 @@ def main():
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         start_epoch = checkpoint['epoch']
         best_acc1 = checkpoint['best_acc1']
-
+        # scheduler = OneCyclePolicy(optimizer, args.lr, (args.epochs - start_epoch)*args.iterations)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer=optimizer,
                                                     gamma=args.lr_scheduler_gamma,
                                                     step_size=args.lr_scheduler_step)
         print(f"load checkpoint {args.exp_name}")
     else:
         start_epoch = 0
+        # scheduler = OneCyclePolicy(optimizer, args.lr, args.epochs*args.iterations)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer=optimizer,
                                                     gamma=args.lr_scheduler_gamma,
                                                     step_size=args.lr_scheduler_step)
@@ -110,7 +111,6 @@ def train(train_loader, model, optimizer, criterion):
 def validate(val_loader, model, prototypes):
     losses = AverageMeter()
     top1 = AverageMeter()
-    num_support = args.num_support_val
 
     # switch to evaluate mode
     model.eval()
