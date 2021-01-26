@@ -1,113 +1,36 @@
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from torchvision import datasets as dset
-import shutil
-import os
 import torch
-from glob import glob
 import numpy as np
-import albumentations as A
-import cv2
-from albumentations.pytorch import ToTensorV2
-from tqdm import tqdm
 import warnings
+
+from torchvision import transforms
 
 warnings.filterwarnings("ignore")
 
 
-def get_dataloader(args, *modes):
-    res = []
+def get_dataloader(args):
     print("Loading data...", end='')
-    for mode in modes:
-        mdb_path = os.path.join('data', 'omniglot_' + mode + '.mdb')
-        try:
-            dataset = torch.load(mdb_path)
-        except Exception:
-            dataset = OmniglotDataset(mode)
-            torch.save(dataset, mdb_path)
 
-        if 'train' in mode:
-            classes_per_it = args.classes_per_it_tr
-            num_samples = args.num_support_tr + args.num_query_tr
-        else:
-            classes_per_it = args.classes_per_it_val
-            num_samples = args.num_support_val + args.num_query_val
+    train_dataset = dset.CIFAR100('../data', train=True, download=True,
+                                  transform=transforms.ToTensor())
+    test_dataset = dset.CIFAR100('../data', train=False, download=False,
+                                 transform=transforms.ToTensor())
 
-        sampler = PrototypicalBatchSampler(dataset.y, classes_per_it, num_samples, args.iterations)
-        data_loader = DataLoader(dataset, batch_sampler=sampler)
-        res.append(data_loader)
+    labels = []
+    for data in train_dataset:
+        labels.append(data[1])
+
+    sampler = PrototypicalBatchSampler(torch.LongTensor(labels), args.classes_per_it_tr, args.num_support_tr,
+                                       args.num_query_tr,
+                                       args.iterations)
+    train_loader = DataLoader(train_dataset, batch_sampler=sampler)
+
+    test_loader = DataLoader(test_dataset, batch_size=args.num_support_val + args.num_query_val)
 
     print("done")
-    if len(modes) == 1:
-        return res[0]
-    else:
-        return res
 
-
-class OmniglotDataset(Dataset):
-    def __init__(self, mode='trainval'):
-        super().__init__()
-        self.root_dir = 'data/omniglot'
-        self.vinyals_dir = 'data/vinyals'
-
-        if not os.path.exists(self.root_dir):
-            print('Data not found. Downloading data')
-            self.download()
-
-        self.x, self.y, self.class_to_idx = self.make_dataset(mode)
-
-    def __getitem__(self, index):
-        return self.x[index], self.y[index]
-
-    def __len__(self):
-        return len(self.x)
-
-    def download(self):
-        origin_dir = 'data/omniglot-py'
-        processed_dir = self.root_dir
-
-        dset.Omniglot(root='data', background=False, download=True)
-        dset.Omniglot(root='data', background=True, download=True)
-
-        try:
-            os.mkdir(processed_dir)
-        except OSError:
-            pass
-
-        for p in ['images_background', 'images_evaluation']:
-            for f in os.listdir(os.path.join(origin_dir, p)):
-                shutil.move(os.path.join(origin_dir, p, f), processed_dir)
-
-        shutil.rmtree(origin_dir)
-
-    def make_dataset(self, mode):
-        x = []
-        y = []
-
-        with open(os.path.join(self.vinyals_dir, mode + '.txt'), 'r') as f:
-            classes = f.read().splitlines()
-
-        class_to_idx = {string: i for i, string in enumerate(classes)}
-
-        for idx, c in enumerate(tqdm(classes, desc="Making dataset")):
-            class_dir, degree = c.rsplit('/', 1)
-            degree = int(degree[3:])
-
-            transform = A.Compose([
-                A.Resize(28, 28),
-                A.Rotate((degree, degree), p=1),
-                A.Normalize(mean=0.92206, std=0.08426),
-                ToTensorV2(),
-            ])
-
-            for img_dir in glob(os.path.join(self.root_dir, class_dir, '*')):
-                img = cv2.imread(img_dir, cv2.IMREAD_GRAYSCALE)
-                # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                img = transform(image=img)['image']
-
-                x.append(img)
-                y.append(idx)
-        y = torch.LongTensor(y)
-        return x, y, class_to_idx
+    return train_loader, test_loader
 
 
 class PrototypicalBatchSampler(object):
@@ -181,8 +104,3 @@ class PrototypicalBatchSampler(object):
         returns the number of iterations (episodes) per epoch
         '''
         return self.iterations
-
-
-if __name__ == '__main__':
-    # torch.save(dataset, 'data/omniglot_trainval.mdb')
-    dataset = torch.load('data/omniglot_trainval.mdb')

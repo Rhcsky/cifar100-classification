@@ -9,8 +9,7 @@ import numpy as np
 from configurate import get_config
 from dataloader import get_dataloader
 from protonets import ProtoNet
-from prototypical_loss import PrototypicalLoss
-from one_cycle_policy import OneCyclePolicy
+from prototypical_loss import PrototypicalLoss, prototypical_evaluator as evaluator
 from utils import AverageMeter
 
 best_acc1 = 0
@@ -27,7 +26,7 @@ def main():
     torch.manual_seed(args.manual_seed)
     torch.cuda.manual_seed(args.manual_seed)
 
-    train_loader, val_loader = get_dataloader(args, 'train', 'val')
+    train_loader, val_loader = get_dataloader(args)
 
     model = ProtoNet().to(device)
 
@@ -45,14 +44,12 @@ def main():
         start_epoch = checkpoint['epoch']
         best_acc1 = checkpoint['best_acc1']
 
-        # scheduler = OneCyclePolicy(optimizer, args.lr, (args.epochs - start_epoch)*args.iterations)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer=optimizer,
                                                     gamma=args.lr_scheduler_gamma,
                                                     step_size=args.lr_scheduler_step)
         print(f"load checkpoint {args.exp_name}")
     else:
         start_epoch = 0
-        # scheduler = OneCyclePolicy(optimizer, args.lr, args.epochs*args.iterations)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer=optimizer,
                                                     gamma=args.lr_scheduler_gamma,
                                                     step_size=args.lr_scheduler_step)
@@ -61,8 +58,8 @@ def main():
 
     for epoch in range(start_epoch, args.epochs):
 
-        train_loss = train(train_loader, model, optimizer, criterion)
-        val_loss, acc1 = validate(val_loader, model, criterion)
+        train_loss, prototypes = train(train_loader, model, optimizer, criterion)
+        val_loss, acc1 = validate(val_loader, model, prototypes)
 
         if acc1 >= best_acc1:
             is_best = True
@@ -98,7 +95,7 @@ def train(train_loader, model, optimizer, criterion):
         input, target = data[0].to(device), data[1].to(device)
 
         output = model(input)
-        loss, _ = criterion(output, target, num_support)
+        loss, _, prototypes = criterion(output, target, num_support)
 
         losses.update(loss.item(), input.size(0))
 
@@ -107,10 +104,10 @@ def train(train_loader, model, optimizer, criterion):
         loss.backward()
         optimizer.step()
 
-    return losses.avg
+    return losses.avg, prototypes
 
 
-def validate(val_loader, model, criterion):
+def validate(val_loader, model, prototypes):
     losses = AverageMeter()
     top1 = AverageMeter()
     num_support = args.num_support_val
@@ -122,7 +119,7 @@ def validate(val_loader, model, criterion):
             input, target = data[0].to(device), data[1].to(device)
 
             output = model(input)
-            loss, acc1 = criterion(output, target, num_support)
+            loss, acc1, _ = evaluator(output, target, prototypes)
 
             losses.update(loss.item(), input.size(0))
             top1.update(acc1.item(), input.size(0))

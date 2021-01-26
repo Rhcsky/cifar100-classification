@@ -74,4 +74,15 @@ def prototypical_loss(input, target, n_support, device):
 
     acc_val = y_hat.eq(target_idxs.squeeze()).float().mean()
 
-    return loss_val, acc_val
+    return loss_val, acc_val, prototypes
+
+
+def prototypical_evaluator(prototype, input, target):
+    dists = euclidean_dist(input, prototype)
+    log_p_y = F.log_softmax(-dists, dim=1)
+    y_hat = log_p_y.argmax(1)
+
+    loss = -log_p_y.squeeze().view(-1).mean()
+    acc = y_hat.eq(target.squeeze()).float().mean()
+
+    return loss, acc, y_hat
