@@ -83,6 +83,7 @@ def prototypical_evaluator(input, target, prototype):
     y_hat = log_p_y.argmax(1)
 
     loss = -log_p_y.squeeze().view(-1).mean()
+    # loss = torch.nn.NLLLoss(log_p_y,target)
     acc = y_hat.eq(target.squeeze()).float().mean()
 
     return loss, acc, y_hat
