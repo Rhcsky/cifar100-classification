@@ -79,11 +79,11 @@ def prototypical_loss(input, target, n_support, device):
 
 def prototypical_evaluator(input, target, prototype):
     dists = euclidean_dist(input, prototype)
-    log_p_y = F.log_softmax(-dists, dim=1)
-    y_hat = log_p_y.argmax(1)
 
-    loss = -log_p_y.squeeze().view(-1).mean()
-    # loss = torch.nn.NLLLoss(log_p_y,target)
+    log_p_y = (-dists).log_softmax(dim=1)
+    loss = torch.nn.NLLLoss(log_p_y, target)
+
+    y_hat = (-dists).softmax(dim=1)
     acc = y_hat.eq(target.squeeze()).float().mean()
 
     return loss, acc, y_hat
