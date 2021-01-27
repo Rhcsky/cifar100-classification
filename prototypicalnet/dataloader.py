@@ -21,11 +21,18 @@ def get_dataloader(args):
     for data in train_dataset:
         labels.append(data[1])
 
-    sampler = PrototypicalBatchSampler(torch.LongTensor(labels), args.classes_per_it_tr, args.num_support_tr,
-                                       args.num_query_tr,
-                                       args.iterations)
-    train_loader = DataLoader(train_dataset, batch_sampler=sampler)
-    test_loader = DataLoader(test_dataset, batch_sampler=sampler)
+    sampler_tr = PrototypicalBatchSampler(torch.LongTensor(labels), args.classes_per_it_tr, args.num_support_tr,
+                                          args.num_query_tr,
+                                          args.iterations)
+
+    labels = []
+    for data in test_dataset:
+        labels.append(data[1])
+    sampler_val = PrototypicalBatchSampler(torch.LongTensor(labels), args.classes_per_it_val, args.num_support_val,
+                                           args.num_query_val,
+                                           args.iterations)
+    train_loader = DataLoader(train_dataset, batch_sampler=sampler_tr)
+    test_loader = DataLoader(test_dataset, batch_sampler=sampler_val)
     # test_loader = DataLoader(test_dataset, batch_size=args.num_support_val + args.num_query_val)
 
     print("done")
