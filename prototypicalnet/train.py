@@ -60,7 +60,9 @@ def main():
     for epoch in range(start_epoch, args.epochs):
 
         train_loss, prototypes = train(train_loader, model, optimizer, criterion)
-        val_loss, acc1 = validate(val_loader, model, prototypes)
+        val_loss, acc1 = validate(val_loader, model, criterion)
+
+        # eval_loss, eval_acc = evaluate(val_loader, model, prototypes)
 
         if acc1 >= best_acc1:
             is_best = True
@@ -77,7 +79,8 @@ def main():
 
         writer.add_scalar("Loss/Train", train_loss, epoch)
         writer.add_scalar("Loss/Val", val_loss, epoch)
-        writer.add_scalar("Acc/Top1", acc1, epoch)
+        writer.add_scalar("Acc/val_Top1", acc1, epoch)
+        writer.add_scalar("Acc/eval_Top1", eval_acc, epoch)
 
         print(f"[{epoch}/{args.epochs}] {train_loss:.3f}, {val_loss:.3f}, {acc1:.3f}, # {best_acc1:.3f}")
 
@@ -89,6 +92,8 @@ def main():
 def train(train_loader, model, optimizer, criterion):
     losses = AverageMeter()
     num_support = args.num_support_tr
+    train_size = len(train_loader)
+    prototypes = 0
 
     # switch to train mode
     model.train()
@@ -96,7 +101,7 @@ def train(train_loader, model, optimizer, criterion):
         input, target = data[0].to(device), data[1].to(device)
 
         output = model(input)
-        loss, _, prototypes = criterion(output, target, num_support)
+        loss, _, _proto = criterion(output, target, num_support)
 
         losses.update(loss.item(), input.size(0))
 
@@ -105,10 +110,32 @@ def train(train_loader, model, optimizer, criterion):
         loss.backward()
         optimizer.step()
 
+        prototypes += _proto / train_size
+
     return losses.avg, prototypes
 
 
-def validate(val_loader, model, prototypes):
+def validate(val_loader, model, criterion):
+    losses = AverageMeter()
+    top1 = AverageMeter()
+    num_support = args.num_support_val
+
+    # switch to evaluate mode
+    model.eval()
+    with torch.no_grad():
+        for i, data in enumerate(val_loader):
+            input, target = data[0].to(device), data[1].to(device)
+
+            output = model(input)
+            loss, acc1, _ = criterion(output, target, num_support)
+
+            losses.update(loss.item(), input.size(0))
+            top1.update(acc1.item(), input.size(0))
+
+    return losses.avg, top1.avg
+
+
+def evaluate(val_loader, model, prototypes):
     losses = AverageMeter()
     top1 = AverageMeter()
 
