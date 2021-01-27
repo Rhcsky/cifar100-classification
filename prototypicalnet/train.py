@@ -80,7 +80,7 @@ def main():
         writer.add_scalar("Loss/Train", train_loss, epoch)
         writer.add_scalar("Loss/Val", val_loss, epoch)
         writer.add_scalar("Acc/val_Top1", acc1, epoch)
-        writer.add_scalar("Acc/eval_Top1", eval_acc, epoch)
+        # writer.add_scalar("Acc/eval_Top1", eval_acc, epoch)
 
         print(f"[{epoch}/{args.epochs}] {train_loss:.3f}, {val_loss:.3f}, {acc1:.3f}, # {best_acc1:.3f}")
 
