@@ -25,8 +25,8 @@ def get_dataloader(args):
                                        args.num_query_tr,
                                        args.iterations)
     train_loader = DataLoader(train_dataset, batch_sampler=sampler)
-
-    test_loader = DataLoader(test_dataset, batch_size=args.num_support_val + args.num_query_val)
+    test_loader = DataLoader(test_dataset, batch_sampler=sampler)
+    # test_loader = DataLoader(test_dataset, batch_size=args.num_support_val + args.num_query_val)
 
     print("done")
 
