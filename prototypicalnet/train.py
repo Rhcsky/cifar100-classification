@@ -59,7 +59,7 @@ def main():
 
     for epoch in range(start_epoch, args.epochs):
 
-        train_loss, prototypes = train(train_loader, model, optimizer, criterion)
+        train_loss = train(train_loader, model, optimizer, criterion)
         val_loss, acc1 = validate(val_loader, model, criterion)
 
         if acc1 >= best_acc1:
