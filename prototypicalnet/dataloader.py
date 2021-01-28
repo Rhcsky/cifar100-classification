@@ -12,10 +12,15 @@ warnings.filterwarnings("ignore")
 def get_dataloader(args):
     print("Loading data...", end='')
 
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761))
+    ])
+
     train_dataset = dset.CIFAR100('../data', train=True, download=True,
-                                  transform=transforms.ToTensor())
+                                  transform=transform)
     test_dataset = dset.CIFAR100('../data', train=False, download=False,
-                                 transform=transforms.ToTensor())
+                                 transform=transform)
 
     labels = []
     for data in train_dataset:
@@ -33,7 +38,6 @@ def get_dataloader(args):
                                            args.iterations)
     train_loader = DataLoader(train_dataset, batch_sampler=sampler_tr)
     test_loader = DataLoader(test_dataset, batch_sampler=sampler_val)
-    # test_loader = DataLoader(test_dataset, batch_size=args.num_support_val + args.num_query_val)
 
     print("done")
 
