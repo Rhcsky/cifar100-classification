@@ -46,12 +46,27 @@ def get_dataloader(args):
         ToTensorV2(),
     ])
 
+    transform_train = transforms.Compose([
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        normalize,
+    ])
+
+    # transform_aug = transforms.Compose([
+    #     transforms.RandomCrop(32, padding=4),
+    #     transforms.RandomHorizontalFlip(),
+    #     aug.torch_transform(),
+    #     transforms.ToTensor(),
+    #     normalize,
+    # ])
+
     transform_test = transforms.Compose([
         transforms.ToTensor(),
         normalize
     ])
 
-    train_dataset = datasets.CIFAR100('./data', train=True, download=True, transform=None)
+    train_dataset = datasets.CIFAR100('./data', train=True, download=True, transform=transform_train)
 
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size,
                               shuffle=True, num_workers=args.workers, pin_memory=True)
