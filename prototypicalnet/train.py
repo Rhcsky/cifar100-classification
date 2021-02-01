@@ -35,7 +35,6 @@ def main():
 
     optimizer = torch.optim.Adam(model.parameters(), args.lr)
 
-    writer = SummaryWriter(args.log_dir)
     cudnn.benchmark = True
 
     if args.resume:
