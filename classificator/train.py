@@ -9,6 +9,7 @@ import numpy as np
 from configuration import get_config
 from dataloader import get_dataloader
 from classificator.model.resnet import ResNet
+from classificator.model.wide_resnet import get_wide_resnet
 from custom_scheduler import OneCyclePolicy
 from utils import AverageMeter, accuracy
 
@@ -23,7 +24,13 @@ def main():
 
     train_loader, val_loader = get_dataloader(args)
 
-    model = ResNet(args.depth, 100, args.bottleneck)
+    if args.model == 'resnet':
+        model = ResNet(args.depth, 100, args.bottleneck)
+    elif args.model.startwith('wrn'):
+        model = get_wide_resnet(architecture=args.model, num_classes=100)
+    else:
+        model = get_wide_resnet()
+
     model.to(device)
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
@@ -44,17 +51,19 @@ def main():
         best_err1 = checkpoint['best_err1']
         best_err5 = checkpoint['best_err5']
 
-        scheduler = OneCyclePolicy(optimizer, args.lr, args.epochs - start_epoch, momentum_rng=[0.85, 0.95])
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50, 100, 150, 200, 250], gamma=0.1)
+        # scheduler = OneCyclePolicy(optimizer, args.lr, args.epochs - start_epoch, momentum_rng=[0.85, 0.95])
         print(f"load checkpoint {args.expname}")
     else:
         start_epoch = 0
-        scheduler = OneCyclePolicy(optimizer, args.lr, args.epochs, momentum_rng=[0.85, 0.95])
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50, 100, 150, 200, 250], gamma=0.1)
+        # scheduler = OneCyclePolicy(optimizer, args.lr, args.epochs, momentum_rng=[0.85, 0.95])
 
     print(f"model parameter : {sum(p.numel() for p in model.parameters() if p.requires_grad)}")
 
     for epoch in range(start_epoch, args.epochs):
 
-        adjust_learning_rate(optimizer, epoch)
+        # adjust_learning_rate(optimizer, epoch)
 
         train_loss = train(train_loader, model, optimizer, criterion)
         err1, err5, val_loss = validate(val_loader, model, criterion)
@@ -80,7 +89,7 @@ def main():
 
         print(f"[{epoch}/{args.epochs}] {train_loss:.3f}, {val_loss:.3f}, {err1}, {err5}, # {best_err1}, {best_err5}")
 
-        # scheduler.step()
+        scheduler.step()
 
     writer.close()
 
