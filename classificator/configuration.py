@@ -67,6 +67,7 @@ parser.add_argument(
 parser.add_argument("--beta", default=1.0, type=float, help="hyperparameter beta")
 parser.add_argument("--cutmix_prob", default=0.5, type=float, help="cutmix probability")
 parser.add_argument("--resume", action="store_true", help="resume train")
+parser.add_argument('-m', "--model", default="wrn28_8_bsconvs_p1d4", help="Classification model")
 
 parser.set_defaults(bottleneck=True)
 parser.set_defaults(verbose=False)
