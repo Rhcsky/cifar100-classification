@@ -45,21 +45,23 @@ def main():
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         start_epoch = checkpoint["epoch"]
         best_acc1 = checkpoint["best_acc1"]
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50, 100, 150, 200, 250], gamma=0.1)
         # scheduler = OneCyclePolicy(optimizer, args.lr, (args.epochs - start_epoch)*args.iterations)
-        scheduler = torch.optim.lr_scheduler.StepLR(
-            optimizer=optimizer,
-            gamma=args.lr_scheduler_gamma,
-            step_size=args.lr_scheduler_step,
-        )
+        # scheduler = torch.optim.lr_scheduler.StepLR(
+        #     optimizer=optimizer,
+        #     gamma=args.lr_scheduler_gamma,
+        #     step_size=args.lr_scheduler_step,
+        # )
         print(f"load checkpoint {args.exp_name}")
     else:
         start_epoch = 0
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50, 100, 150, 200, 250], gamma=0.1)
         # scheduler = OneCyclePolicy(optimizer, args.lr, args.epochs*args.iterations)
-        scheduler = torch.optim.lr_scheduler.StepLR(
-            optimizer=optimizer,
-            gamma=args.lr_scheduler_gamma,
-            step_size=args.lr_scheduler_step,
-        )
+        # scheduler = torch.optim.lr_scheduler.StepLR(
+        #     optimizer=optimizer,
+        #     gamma=args.lr_scheduler_gamma,
+        #     step_size=args.lr_scheduler_step,
+        # )
 
     print(
         f"model parameter : {sum(p.numel() for p in model.parameters() if p.requires_grad)}"
