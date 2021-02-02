@@ -4,10 +4,10 @@ import torch
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, Dataset
-from tqdm import tqdm
 
-import albumentations as A
-from albumentations.pytorch import ToTensorV2
+
+# import albumentations as A
+# from albumentations.pytorch import ToTensorV2
 
 
 def get_dataloader(args):
@@ -29,22 +29,22 @@ def get_dataloader(args):
         normalize,
     ])
 
-    transform_albumentations = A.Compose([
-        A.Resize(36, 36),
-        A.RandomCrop(32, 32),
-        A.OneOf([
-            A.HorizontalFlip(p=1),
-            A.RandomRotate90(p=1),
-            A.VerticalFlip(p=1)
-        ], p=1),
-        A.OneOf([
-            A.MotionBlur(p=1),
-            A.OpticalDistortion(p=1),
-            A.GaussNoise(p=1)
-        ], p=1),
-        normalize,
-        ToTensorV2(),
-    ])
+    # transform_albumentations = A.Compose([
+    #     A.Resize(36, 36),
+    #     A.RandomCrop(32, 32),
+    #     A.OneOf([
+    #         A.HorizontalFlip(p=1),
+    #         A.RandomRotate90(p=1),
+    #         A.VerticalFlip(p=1)
+    #     ], p=1),
+    #     A.OneOf([
+    #         A.MotionBlur(p=1),
+    #         A.OpticalDistortion(p=1),
+    #         A.GaussNoise(p=1)
+    #     ], p=1),
+    #     normalize,
+    #     ToTensorV2(),
+    # ])
 
     transform_train = transforms.Compose([
         transforms.Resize((36, 36)),
