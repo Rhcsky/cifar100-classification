@@ -142,3 +142,12 @@ class ResNet(nn.Module):
         x = self.fc(x)
 
         return x
+
+
+if __name__ == '__main__':
+    import torch
+
+    img = torch.rand((1, 3, 32, 32))
+    model = ResNet(20, 100, False)
+
+    print(model)
