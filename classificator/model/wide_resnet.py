@@ -195,5 +195,8 @@ def get_wide_resnet(architecture='wrn28_8_bsconvs_p1d4', num_classes=100):
 if __name__ == '__main__':
     img = torch.rand((1, 3, 32, 32))
     model = get_wide_resnet(architecture='wrn28_8_bsconvs_p1d4')
+    from classificator.bsconv.profile import ModelProfiler
 
-    print(model)
+    profile = ModelProfiler(model)
+
+    profile.print_results()
