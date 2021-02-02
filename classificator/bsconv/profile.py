@@ -6,7 +6,7 @@ import torch.nn
 import classificator.bsconv.utils as utils
 
 
-class ModelProfiler:
+class ModelProfiler():
     def __init__(self, model, input_size=(1, 3, 224, 224), input_device="cpu"):
         # construct empty input tensor
         input = self.get_input(size=input_size, device=input_device)
@@ -108,23 +108,23 @@ class ModelProfiler:
         return flops
 
     @staticmethod
-    def count_flops_dropout():
+    def count_flops_dropout(module, input, output):
         return 0
 
     @staticmethod
-    def count_flops_bn(module, input):
+    def count_flops_bn(module, input, output):
         flops = input[0].numel()
         if module.affine:
             flops *= 2
         return flops
 
     @staticmethod
-    def count_flops_relu(output):
+    def count_flops_relu(module, input, output):
         flops = output.numel()
         return flops
 
     @staticmethod
-    def count_flops_pool(input):
+    def count_flops_pool(module, input, output):
         flops = input[0].numel()
         return flops
 
