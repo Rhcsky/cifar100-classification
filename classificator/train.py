@@ -26,7 +26,7 @@ def main():
 
     if args.model == 'resnet':
         model = ResNet(args.depth, 100, args.bottleneck)
-    elif args.model.startwith('wrn'):
+    elif args.model.startswith('wrn'):
         model = get_wide_resnet(architecture=args.model, num_classes=100)
     else:
         model = get_wide_resnet()
