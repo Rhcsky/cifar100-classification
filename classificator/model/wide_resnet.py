@@ -150,7 +150,7 @@ def get_wide_resnet(architecture='wrn28_8_bsconvs_p1d4', num_classes=100):
     }
 
     # split architecture string into base part and BSConv part
-    pattern = r"^(?P<base>classificator[0-9]+|wrn[0-9]+_[0-9]+)(_(?P<bsconv_variant>bsconvu|bsconvs_p[0-9]+d[0-9]+))?$"
+    pattern = r"^(?P<base>resnet[0-9]+|wrn[0-9]+_[0-9]+)(_(?P<bsconv_variant>bsconvu|bsconvs_p[0-9]+d[0-9]+))?$"
     match = re.match(pattern, architecture)
     if match is None:
         raise ValueError("Model architecture '{}' is not supported".format(architecture))
@@ -158,9 +158,13 @@ def get_wide_resnet(architecture='wrn28_8_bsconvs_p1d4', num_classes=100):
     bsconv_variant = match.group("bsconv_variant")
 
     # determine the width_multiplier and the key for the units_per_stage lookup table
-    split = base.split("_")
-    key = split[0]
-    width_multiplier = float(split[1])
+    if base.startswith('resnet'):
+        key = base
+        width_multiplier = 1.0
+    else:
+        split = base.split("_")
+        key = split[0]
+        width_multiplier = float(split[1])
 
     # check if model configuration is defined in the lookup table
     if key not in units_per_stage:
@@ -190,6 +194,6 @@ def get_wide_resnet(architecture='wrn28_8_bsconvs_p1d4', num_classes=100):
 
 if __name__ == '__main__':
     img = torch.rand((1, 3, 32, 32))
-    model = get_wide_resnet()
+    model = get_wide_resnet(architecture='wrn28_8_bsconvs_p1d4')
 
     print(model)
