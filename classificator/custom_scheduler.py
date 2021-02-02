@@ -1,5 +1,4 @@
-import torch
-from torch.optim import SGD, lr_scheduler
+from torch.optim import lr_scheduler
 import numpy as np
 
 
@@ -52,8 +51,8 @@ class ParameterUpdate(object):
 
 
 def apply_lambda(last_epoch, bases, lambdas):
-        return [base * lmbda(last_epoch) for lmbda, base in zip(lambdas, bases)]
-    
+    return [base * lmbda(last_epoch) for lmbda, base in zip(lambdas, bases)]
+
 
 class LambdaScheduler(_LRMomentumScheduler):
     """Sets the learning rate and momentum of each parameter group to the initial lr and momentum
@@ -85,9 +84,9 @@ class LambdaScheduler(_LRMomentumScheduler):
         >>>     scheduler.step()
     """
 
-    def __init__(self, optimizer, lr_lambda=lambda x:x, momentum_lambda=lambda x:x, last_epoch=-1):
+    def __init__(self, optimizer, lr_lambda=lambda x: x, momentum_lambda=lambda x: x, last_epoch=-1):
         self.optimizer = optimizer
-        
+
         if not isinstance(lr_lambda, (list, tuple)):
             self.lr_lambdas = [lr_lambda] * len(optimizer.param_groups)
         else:
@@ -95,7 +94,7 @@ class LambdaScheduler(_LRMomentumScheduler):
                 raise ValueError("Expected {} lr_lambdas, but got {}".format(
                     len(optimizer.param_groups), len(lr_lambda)))
             self.lr_lambdas = list(lr_lambda)
-        
+
         if not isinstance(momentum_lambda, (list, tuple)):
             self.momentum_lambdas = [momentum_lambda] * len(optimizer.param_groups)
         else:
@@ -115,7 +114,7 @@ class LambdaScheduler(_LRMomentumScheduler):
         callable objects and not if they are functions or lambdas.
         """
         state_dict = {key: value for key, value in self.__dict__.items()
-            if key not in ('optimizer', 'lr_lambdas', 'momentum_lambdas')}
+                      if key not in ('optimizer', 'lr_lambdas', 'momentum_lambdas')}
         state_dict['lr_lambdas'] = [None] * len(self.lr_lambdas)
         state_dict['momentum_lambdas'] = [None] * len(self.momentum_lambdas)
 
@@ -144,7 +143,7 @@ class LambdaScheduler(_LRMomentumScheduler):
         for idx, fn in enumerate(momentum_lambdas):
             if fn is not None:
                 self.momentum_lambdas[idx].__dict__.update(fn)
-    
+
     def get_lr(self):
         return apply_lambda(self.last_epoch, self.base_lrs, self.lr_lambdas)
 
@@ -214,7 +213,7 @@ class ListScheduler(LambdaScheduler):
                 lr_lambda = [ParameterUpdate(lrs, g['lr']) for g in groups]
             else:
                 lr_lambda = [ParameterUpdate(l, g['lr']) for l, g in zip(lrs, groups)]
-        
+
         if momentums is None:
             momentum_lambda = lambda x: x
         else:
@@ -279,7 +278,7 @@ class OneCyclePolicy(ListScheduler):
                     np.linspace(l * 1e-1, l, phase_epochs),
                     np.linspace(l, l * 1e-1, phase_epochs),
                     np.linspace(l * 1e-1, l * 1e-2, epochs - 2 * phase_epochs),
-                ]) for  l in lr
+                ]) for l in lr
             ]
         else:
             lrs = np.hstack([
@@ -287,7 +286,7 @@ class OneCyclePolicy(ListScheduler):
                 np.linspace(lr, lr * 1e-1, phase_epochs),
                 np.linspace(lr * 1e-1, lr * 1e-2, epochs - 2 * phase_epochs),
             ])
-        
+
         if momentum_rng is not None:
             momentum_rng = np.array(momentum_rng)
             if len(momentum_rng.shape) == 2:
@@ -310,7 +309,7 @@ class OneCyclePolicy(ListScheduler):
                 ])
         else:
             momentums = None
-        
+
         super().__init__(optimizer, lrs, momentums)
 
 

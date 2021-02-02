@@ -3,7 +3,7 @@ import warnings
 
 import torch.nn
 
-import utils
+import classificator.bsconv.utils as utils
 
 
 class ModelProfiler:

@@ -9,7 +9,7 @@ import torch.optim
 import torch.utils.data
 import torch.utils.data.distributed
 
-from resnet import ResNet
+from classificator.model.resnet import ResNet
 from dataloader import get_dataloader
 from utils import AverageMeter, accuracy
 

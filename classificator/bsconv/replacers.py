@@ -2,9 +2,9 @@ import abc
 import types
 
 import torch
-import utils
-import modules
-import profile
+from classificator.bsconv import utils
+from classificator.bsconv import modules
+from classificator.bsconv import profile
 
 
 ###

@@ -8,7 +8,7 @@ import numpy as np
 
 from configuration import get_config
 from dataloader import get_dataloader
-from resnet import ResNet
+from classificator.model.resnet import ResNet
 from custom_scheduler import OneCyclePolicy
 from utils import AverageMeter, accuracy
 
