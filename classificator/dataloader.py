@@ -46,14 +46,6 @@ def get_dataloader(args):
     #     ToTensorV2(),
     # ])
 
-    transform_train = transforms.Compose([
-        transforms.Resize((36, 36)),
-        # transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        normalize,
-    ])
-
     # transform_aug = transforms.Compose([
     #     transforms.RandomCrop(32, padding=4),
     #     transforms.RandomHorizontalFlip(),
@@ -63,7 +55,6 @@ def get_dataloader(args):
     # ])
 
     transform_test = transforms.Compose([
-        transforms.Resize((36, 36)),
         transforms.ToTensor(),
         normalize
     ])
