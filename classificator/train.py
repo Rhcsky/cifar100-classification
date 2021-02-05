@@ -10,7 +10,7 @@ from configuration import get_config
 from dataloader import get_dataloader
 from classificator.model.resnet import ResNet
 from classificator.model.wide_resnet import get_wide_resnet
-from custom_scheduler import OneCyclePolicy
+from one_cycle_policy import OneCyclePolicy
 from utils import AverageMeter, accuracy
 
 best_err1 = 100
@@ -52,12 +52,12 @@ def main():
         best_err5 = checkpoint['best_err5']
 
         scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50, 100, 150, 200, 250], gamma=0.1)
-        # scheduler = OneCyclePolicy(optimizer, args.lr, args.epochs - start_epoch, momentum_rng=[0.85, 0.95])
-        print(f"load checkpoint {args.expname}")
+        # scheduler = OneCyclePolicy(optimizer, num_steps=args.epochs-start_epoch, lr_range=(1e-4, 1e-1), momentum_range=(0.85, 0.95))
+        print(f"load exp {args.expname}")
     else:
         start_epoch = 0
         scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50, 100, 150, 200, 250], gamma=0.1)
-        # scheduler = OneCyclePolicy(optimizer, args.lr, args.epochs, momentum_rng=[0.85, 0.95])
+        # scheduler = OneCyclePolicy(optimizer, num_steps=args.epochs, lr_range=(1e-4, 1e-1), momentum_range=(0.85, 0.95))
 
     print(f"model parameter : {sum(p.numel() for p in model.parameters() if p.requires_grad)}")
 
