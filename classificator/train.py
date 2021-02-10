@@ -77,7 +77,7 @@ def main():
             'best_err5': best_err5,
             'optimizer_state_dict': optimizer.state_dict(),
         }, is_best)
-
+        
         writer.add_scalar("Loss/Train", train_loss)
         writer.add_scalar("Loss/Val", val_loss)
         writer.add_scalar("Err/Top1", err1)

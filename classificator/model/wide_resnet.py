@@ -139,7 +139,7 @@ def build_resnet(num_classes,
     return net
 
 
-def get_wide_resnet(architecture='wrn28_8_bsconvs_p1d4', num_classes=100):
+def get_wide_resnet(architecture='wrn28_3.0_bsconvs_p1d4', num_classes=100):
     units_per_stage = {
         "resnet20": [3, 3, 3],
         "resnet56": [9, 9, 9],
@@ -150,7 +150,7 @@ def get_wide_resnet(architecture='wrn28_8_bsconvs_p1d4', num_classes=100):
     }
 
     # split architecture string into base part and BSConv part
-    pattern = r"^(?P<base>resnet[0-9]+|wrn[0-9]+_[0-9]+)(_(?P<bsconv_variant>bsconvu|bsconvs_p[0-9]+d[0-9]+))?$"
+    pattern = r"^(?P<base>resnet[0-9]+|wrn[0-9]+_[0-9]+\.[0-9]+)(_(?P<bsconv_variant>bsconvu|bsconvs_p[0-9]+d[0-9]+))?$"
     match = re.match(pattern, architecture)
     if match is None:
         raise ValueError("Model architecture '{}' is not supported".format(architecture))
@@ -194,9 +194,11 @@ def get_wide_resnet(architecture='wrn28_8_bsconvs_p1d4', num_classes=100):
 
 if __name__ == '__main__':
     img = torch.rand((1, 3, 32, 32))
-    model = get_wide_resnet(architecture='wrn28_8_bsconvs_p1d4')
-    from classificator.bsconv.profile import ModelProfiler
 
-    profile = ModelProfiler(model)
+    model = get_wide_resnet()
 
-    profile.print_results()
+    # from classificator.bsconv.profile import ModelProfiler
+    #
+    # profile = ModelProfiler(model)
+    #
+    # profile.print_results()
