@@ -7,7 +7,7 @@ parser = argparse.ArgumentParser(description="Cutmix PyTorch CIFAR-100")
 parser.add_argument(
     "-j",
     "--workers",
-    default=4,
+    default=0,
     type=int,
     metavar="N",
     help="number of data loading workers (default: 4)",
@@ -62,12 +62,12 @@ parser.add_argument(
     help="number of new channel increases per depth (default: 300)",
 )
 parser.add_argument(
-    "--expname", "-e", default="TEST", type=str, help="name of experiment"
+    "--expname", "-e", default="pyramid-no-loss", type=str, help="name of experiment"
 )
 parser.add_argument("--beta", default=1.0, type=float, help="hyperparameter beta")
 parser.add_argument("--cutmix_prob", default=0.5, type=float, help="cutmix probability")
 parser.add_argument("--resume", action="store_true", help="resume train")
-parser.add_argument('-m', "--model", default="wrn28_3.0_bsconvs_p1d4", help="Classification model")
+parser.add_argument('-m', "--model", default="pyramid", help="Classification model")
 
 parser.set_defaults(bottleneck=True)
 parser.set_defaults(verbose=False)

@@ -9,7 +9,7 @@ import torch.optim
 import torch.utils.data
 import torch.utils.data.distributed
 
-from classificator.model.resnet import ResNet
+from model.resnet import ResNet
 from dataloader import get_dataloader
 from utils import AverageMeter, accuracy
 
@@ -35,22 +35,30 @@ def main():
 
     print(f"|{'Model name':^20}|{'Top1 err':^15}|{'Top5 err':^15}|{'Top1 acc':^15}|")
     for path in model_path:
+        if os.path.basename(path).startswith('1'):
+            continue
         pth_file = path + "/model_best.pth"
-        conf_file = path + "/params.json"
+        # conf_file = path + "/params.json"
 
-        params = json.load(open(conf_file))
-        args.__dict__.update(params)
+        # params = json.load(open(conf_file))
+        # args.__dict__.update(params)
 
         checkpoint = torch.load(pth_file)
 
-        model = ResNet(args.depth, 100, args.bottleneck).to(device)
+        if args.model == 'resnet':
+            model = ResNet(args.depth, 100, args.bottleneck)
+        elif args.model.startswith('wrn'):
+            model = get_wide_resnet(architecture=args.model, num_classes=100)
+        else:
+            model = get_wide_resnet()
+
+        model.to(device)
         model.load_state_dict(checkpoint["model_state_dict"])
 
         # evaluate on validation set
         err1, err5, val_loss = validate(val_loader, model, criterion, path)
 
         print(f"|{os.path.basename(path):^20}|{err1:^15}|{err5:^15}|{100 - err1:^15}|")
-
 
 def validate(val_loader, model, criterion, path):
     losses = AverageMeter()
@@ -63,9 +71,9 @@ def validate(val_loader, model, criterion, path):
     model.eval()
 
     for i, (input, target) in enumerate(val_loader):
-        target = target.cuda()
+        target = target.to(device)
 
-        output = model(input.cuda())
+        output = model(input.to(device))
         loss = criterion(output, target)
 
         # measure accuracy and record loss
@@ -81,7 +89,6 @@ def validate(val_loader, model, criterion, path):
 
     f.close()
     return top1.avg, top5.avg, losses.avg
-
 
 if __name__ == "__main__":
     main()

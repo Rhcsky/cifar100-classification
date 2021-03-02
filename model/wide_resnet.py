@@ -3,8 +3,8 @@ import re
 import torch.nn
 import torch.nn.init
 
-from classificator.bsconv.replacers import BSConvS_Replacer, BSConvU_Replacer
-from classificator.bsconv.common import conv1x1_block, conv3x3_block, Classifier
+from bsconv.replacers import BSConvS_Replacer, BSConvU_Replacer
+from bsconv.common import conv1x1_block, conv3x3_block, Classifier
 
 
 ###
@@ -139,7 +139,7 @@ def build_resnet(num_classes,
     return net
 
 
-def get_wide_resnet(architecture='wrn28_3.0_bsconvs_p1d4', num_classes=100):
+def get_wide_resnet(architecture='wrn28_3.26_bsconvs_p1d4', num_classes=100):
     units_per_stage = {
         "resnet20": [3, 3, 3],
         "resnet56": [9, 9, 9],

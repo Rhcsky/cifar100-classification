@@ -4,13 +4,16 @@ from glob import glob
 import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.tensorboard import SummaryWriter
+from torch.nn.utils import clip_grad_norm_
 import numpy as np
 
 from configuration import get_config
 from dataloader import get_dataloader
-from classificator.model.resnet import ResNet
-from classificator.model.wide_resnet import get_wide_resnet
+from model.resnet import ResNet
+from model.wide_resnet import get_wide_resnet
+from model.pyramidnet import PyramidNet
 from utils import AverageMeter, accuracy, optional_weight_decay_param
+from bsconv.replacers import BSConvS_Replacer
 
 best_err1 = 100
 best_err5 = 100
@@ -18,7 +21,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
 def main():
-    global args, best_err1, best_err5, device
+    global args, best_err1, best_err5, device, scheduler
     args = get_config()
 
     train_loader, val_loader = get_dataloader(args)
@@ -26,9 +29,16 @@ def main():
     if args.model == 'resnet':
         model = ResNet(args.depth, 100, args.bottleneck)
     elif args.model.startswith('wrn'):
-        model = get_wide_resnet(architecture=args.model, num_classes=100)
+        model = get_wide_resnet(architecture='wrn28_3.26_bsconvs_p1d4', num_classes=100)
+    elif args.model.startswith('pyramid'):
+        model = PyramidNet(depth=32, alpha=300, bottleneck=True)
+
+        p_frac = [1, 4]
+        p = p_frac[0] / p_frac[1]
+        replacer = BSConvS_Replacer(p=p, with_bn=True)
+        model = replacer.apply(model)
     else:
-        model = get_wide_resnet()
+        raise ValueError
 
     model.to(device)
 
@@ -52,9 +62,9 @@ def main():
     else:
         start_epoch = 0
 
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50, 100, 150, 200, 250], gamma=0.1)
-    # scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=0.1, steps_per_epoch=len(train_loader),
-    #                                                 epochs=args.epochs - start_epoch, pct_start=0.1)
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50, 100, 150, 200, 250], gamma=0.1)
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=0.1, steps_per_epoch=len(train_loader),
+                                                    epochs=args.epochs - start_epoch, pct_start=0.05)
     print(f"model parameter : {sum(p.numel() for p in model.parameters() if p.requires_grad)}")
 
     for epoch in range(start_epoch, args.epochs):
@@ -77,7 +87,7 @@ def main():
             'best_err5': best_err5,
             'optimizer_state_dict': optimizer.state_dict(),
         }, is_best)
-        
+
         writer.add_scalar("Loss/Train", train_loss)
         writer.add_scalar("Loss/Val", val_loss)
         writer.add_scalar("Err/Top1", err1)
@@ -85,7 +95,7 @@ def main():
 
         print(f"[{epoch}/{args.epochs}] {train_loss:.3f}, {val_loss:.3f}, {err1}, {err5}, # {best_err1}, {best_err5}")
 
-        scheduler.step()
+        # scheduler.step()
 
     writer.close()
 
@@ -129,7 +139,9 @@ def train(train_loader, model, optimizer, criterion):
         # compute gradient and do SGD step
         optimizer.zero_grad()
         loss.backward()
+        clip_grad_norm_(model.parameters(), 1)
         optimizer.step()
+        scheduler.step()
 
     return losses.avg
 
@@ -152,7 +164,6 @@ def validate(val_loader, model, criterion):
         (err1, err5), _ = accuracy(output, target, topk=(1, 5))
 
         losses.update(loss.item(), input.size(0))
-
         top1.update(err1.item(), input.size(0))
         top5.update(err5.item(), input.size(0))
 
