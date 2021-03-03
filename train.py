@@ -72,28 +72,32 @@ def main():
         # adjust_learning_rate(optimizer, epoch)
 
         train_loss = train(train_loader, model, optimizer, criterion)
-        err1, err5, val_loss = validate(val_loader, model, criterion)
+        if (epoch + 1) % 10 == 0:
+            err1, err5, val_loss = validate(val_loader, model, criterion)
 
-        if err1 <= best_err1:
-            is_best = True
-            best_err1, best_err5 = err1, err5
+            if err1 <= best_err1:
+                is_best = True
+                best_err1, best_err5 = err1, err5
+            else:
+                is_best = False
+
+            save_checkpoint({
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'best_err1': best_err1,
+                'best_err5': best_err5,
+                'optimizer_state_dict': optimizer.state_dict(),
+            }, is_best)
+
+            writer.add_scalar("Loss/Val", val_loss)
+            writer.add_scalar("Err/Top1", err1)
+            writer.add_scalar("Err/Top5", err5)
+            print(
+                f"[{epoch}/{args.epochs}] {train_loss:.3f}, {val_loss:.3f}, {err1}, {err5}, # {best_err1}, {best_err5}")
+
         else:
-            is_best = False
-
-        save_checkpoint({
-            'epoch': epoch,
-            'model_state_dict': model.state_dict(),
-            'best_err1': best_err1,
-            'best_err5': best_err5,
-            'optimizer_state_dict': optimizer.state_dict(),
-        }, is_best)
-
+            print(f"[{epoch}/{args.epochs}] {train_loss:.3f}")
         writer.add_scalar("Loss/Train", train_loss)
-        writer.add_scalar("Loss/Val", val_loss)
-        writer.add_scalar("Err/Top1", err1)
-        writer.add_scalar("Err/Top5", err5)
-
-        print(f"[{epoch}/{args.epochs}] {train_loss:.3f}, {val_loss:.3f}, {err1}, {err5}, # {best_err1}, {best_err5}")
 
         # scheduler.step()
 
