@@ -31,7 +31,7 @@ def main():
     elif args.model.startswith('wrn'):
         model = get_wide_resnet(architecture='wrn28_3.26_bsconvs_p1d4', num_classes=100)
     elif args.model.startswith('pyramid'):
-        model = PyramidNet(depth=32, alpha=300, bottleneck=True)
+        model = PyramidNet(depth=32, alpha=295, bottleneck=True)
 
         p_frac = [1, 4]
         p = p_frac[0] / p_frac[1]
@@ -188,8 +188,8 @@ def rand_bbox(size, lam):
     W = size[2]
     H = size[3]
     cut_rat = np.sqrt(1. - lam)
-    cut_w = np.int(W * cut_rat)
-    cut_h = np.int(H * cut_rat)
+    cut_w = np.int32(W * cut_rat)
+    cut_h = np.int32(H * cut_rat)
 
     # uniform
     cx = np.random.randint(W)
