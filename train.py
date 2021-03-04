@@ -7,7 +7,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.nn.utils import clip_grad_norm_
 import numpy as np
 
-from configuration import get_config
+from arguments import get_config
 from dataloader import get_dataloader
 from model.resnet import ResNet
 from model.wide_resnet import get_wide_resnet
@@ -132,6 +132,9 @@ def train(train_loader, model, optimizer, criterion):
             # compute output
             output = model(input)
             loss = criterion(output, target)
+
+        # additional loss for bsconv
+        loss += model.reg_loss(alpha=0.1)
 
         # measure accuracy and record loss
         (err1, err5), _ = accuracy(output, target, topk=(1, 5))
