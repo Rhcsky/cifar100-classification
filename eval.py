@@ -1,7 +1,6 @@
 import argparse
 import os
 from glob import glob
-import json
 
 import torch
 import torch.nn.parallel
@@ -60,6 +59,7 @@ def main():
 
         print(f"|{os.path.basename(path):^20}|{err1:^15}|{err5:^15}|{100 - err1:^15}|")
 
+
 def validate(val_loader, model, criterion, path):
     losses = AverageMeter()
     top1 = AverageMeter()
@@ -89,6 +89,7 @@ def validate(val_loader, model, criterion, path):
 
     f.close()
     return top1.avg, top5.avg, losses.avg
+
 
 if __name__ == "__main__":
     main()
