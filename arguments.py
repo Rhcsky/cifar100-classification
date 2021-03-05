@@ -62,7 +62,7 @@ parser.add_argument(
     help="number of new channel increases per depth (default: 300)",
 )
 parser.add_argument(
-    "--expname", "-e", default="pyramid-with-loss", type=str, help="name of experiment"
+    "--expname", "-e", default="TEST", type=str, help="name of experiment"
 )
 parser.add_argument("--beta", default=1.0, type=float, help="hyperparameter beta")
 parser.add_argument("--cutmix_prob", default=0.5, type=float, help="cutmix probability")
