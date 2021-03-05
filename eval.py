@@ -1,6 +1,7 @@
 import argparse
 import os
 from glob import glob
+import json
 
 import torch
 import torch.nn.parallel
@@ -9,8 +10,11 @@ import torch.utils.data
 import torch.utils.data.distributed
 
 from model.resnet import ResNet
+from model.wide_resnet import get_wide_resnet
+from model.pyramidnet import PyramidNet
+from bsconv.replacers import BSConvS_Replacer
 from dataloader import get_dataloader
-from utils import AverageMeter, accuracy
+from utils import accuracy, margin_of_error
 
 parser = argparse.ArgumentParser(description="Cutmix PyTorch CIFAR-100 Test")
 parser.add_argument("--model_path", default="./runs/*", type=str, metavar="PATH")
@@ -31,39 +35,63 @@ def main():
     criterion = torch.nn.CrossEntropyLoss().to(device)
 
     model_path = glob(args.model_path)
+    max_len_exp = max([len(x) for x in model_path]) + 2
 
-    print(f"|{'Model name':^20}|{'Top1 err':^15}|{'Top5 err':^15}|{'Top1 acc':^15}|")
+    print(f"|{'Model name':^{max_len_exp}}|{'Loss':^17}|{'Top1 err':^17}|{'Top1 acc':^17}|")
+
+    except_list = []
+    pl_mi = u"\u00B1"
+
     for path in model_path:
-        if os.path.basename(path).startswith('1'):
-            continue
-        pth_file = path + "/model_best.pth"
-        # conf_file = path + "/params.json"
+        checkpoint, args = None, None
 
-        # params = json.load(open(conf_file))
-        # args.__dict__.update(params)
+        pth_file = path + "/model_best.pth"
+        conf_file = path + "/params.json"
+
+        params = json.load(open(conf_file))
+        args.__dict__.update(params)
 
         checkpoint = torch.load(pth_file)
+
+        if checkpoint is None or args is None:
+            except_list.append(f"checkpoint and params are not exist in {path}")
 
         if args.model == 'resnet':
             model = ResNet(args.depth, 100, args.bottleneck)
         elif args.model.startswith('wrn'):
-            model = get_wide_resnet(architecture=args.model, num_classes=100)
+            model = get_wide_resnet(architecture='wrn28_3.26_bsconvs_p1d4', num_classes=100)
+        elif args.model.startswith('pyramid'):
+            model = PyramidNet(depth=32, alpha=295, bottleneck=True)
+
+            p_frac = [1, 4]
+            p = p_frac[0] / p_frac[1]
+            replacer = BSConvS_Replacer(p=p, with_bn=True)
+            model = replacer.apply(model)
         else:
-            model = get_wide_resnet()
+            raise ValueError
 
         model.to(device)
         model.load_state_dict(checkpoint["model_state_dict"])
 
         # evaluate on validation set
-        err1, err5, val_loss = validate(val_loader, model, criterion, path)
+        err1_list, val_loss_list = test(val_loader, model, criterion, path)
 
-        print(f"|{os.path.basename(path):^20}|{err1:^15}|{err5:^15}|{100 - err1:^15}|")
+        err1, err1_moe = margin_of_error(err1_list)
+        # err5, err5_moe = margin_of_error(err5_list)
+        loss, loss_moe = margin_of_error(val_loss_list)
+
+        err1_string = f'{err1:.3f} {pl_mi} {err1_moe:.3f}'
+        # err5_string = f'{err5:.3f} {pl_mi} {err5_moe:.3f}'
+        loss_string = f'{loss:.3f} {pl_mi} {loss_moe:.3f}'
+
+        print(f"|{path:^{max_len_exp}}|{loss_string:^17}|{err1_string:^17}|{100 - err1}")
 
 
-def validate(val_loader, model, criterion, path):
-    losses = AverageMeter()
-    top1 = AverageMeter()
-    top5 = AverageMeter()
+@torch.no_grad()
+def test(val_loader, model, criterion, path):
+    losses = []
+    top1 = []
+    # top5 = []
 
     f = open(f'{path + "/res"}.txt', "w")
 
@@ -82,13 +110,12 @@ def validate(val_loader, model, criterion, path):
         for pred in pred_list:
             f.write(str(pred.item()) + "\n")
 
-        losses.update(loss.item(), input.size(0))
-
-        top1.update(err1.item(), input.size(0))
-        top5.update(err5.item(), input.size(0))
+        losses.append(loss.item())
+        top1.append(err1.item())
+        # top5.append(err5.item())
 
     f.close()
-    return top1.avg, top5.avg, losses.avg
+    return top1, losses
 
 
 if __name__ == "__main__":
