@@ -1,3 +1,6 @@
+import math
+
+
 class AverageMeter(object):
     """Computes and stores the average and current value"""
 
@@ -42,3 +45,14 @@ def optional_weight_decay_param(net, l2_value, skip_list=()):
         else:
             decay.append(param)
     return [{'params': no_decay, 'weight_decay': 0.}, {'params': decay, 'weight_decay': l2_value}]
+
+
+def margin_of_error(values, confidence_interval=1.96):
+    num = len(values)
+    mean = sum(values) / num
+    variance = sum(list(map(lambda x: pow(x - mean, 2), values))) / num
+
+    standard_deviation = math.sqrt(variance)
+    standard_error = standard_deviation / math.sqrt(num)
+
+    return mean, standard_error * confidence_interval
