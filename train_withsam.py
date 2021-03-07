@@ -73,8 +73,6 @@ def main():
 
     for epoch in range(start_epoch, args.epochs):
 
-        # adjust_learning_rate(optimizer, epoch)
-
         train_loss = train(train_loader, model, optimizer, criterion)
         if (epoch + 1) % 10 == 0:
             err1, err5, val_loss = validate(val_loader, model, criterion)
@@ -112,7 +110,7 @@ def train(train_loader, model, optimizer, criterion):
     losses = AverageMeter()
     top1 = AverageMeter()
     top5 = AverageMeter()
-    is_cutmix = False
+
     # switch to train mode
     model.train()
     for i, data in enumerate(train_loader):
@@ -227,14 +225,6 @@ def rand_bbox(size, lam):
     bby2 = np.clip(cy + cut_h // 2, 0, H)
 
     return bbx1, bby1, bbx2, bby2
-
-
-def adjust_learning_rate(optimizer, epoch):
-    """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
-    lr = args.lr * (0.1 ** (epoch // (args.epochs * 0.5))) * (0.1 ** (epoch // (args.epochs * 0.75)))
-
-    for param_group in optimizer.param_groups:
-        param_group['lr'] = lr
 
 
 if __name__ == '__main__':
