@@ -128,7 +128,7 @@ class PyramidNetShake(nn.Module):
 
         self.addrate = alpha / (3 * n * 1.0)
         self.ps_shakedrop = [1 - (1.0 - (0.5 / (3 * n)) * (i + 1)) for i in range(3 * n)]
-        self.idx_shakedrop = 1
+        self.idx_shakedrop = 0
 
         self.input_featuremap_dim = self.inplanes
         self.conv1 = nn.Conv2d(3, self.input_featuremap_dim, kernel_size=3, stride=1, padding=1, bias=False)
@@ -160,7 +160,10 @@ class PyramidNetShake(nn.Module):
 
         layers = []
         self.featuremap_dim = self.featuremap_dim + self.addrate
-        layers.append(block(self.input_featuremap_dim, int(round(self.featuremap_dim)), stride, downsample,self.ps_shakedrop[0]))
+        layers.append(block(self.input_featuremap_dim, int(round(self.featuremap_dim)), stride, downsample,
+                            self.ps_shakedrop[self.idx_shakedrop]))
+        self.idx_shakedrop += 1
+
         for i in range(1, block_depth):
             temp_featuremap_dim = self.featuremap_dim + self.addrate
             layers.append(
